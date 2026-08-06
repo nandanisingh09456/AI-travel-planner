@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import MiraChat from "@/components/MiraChat";
 
-export default function PlannerPage() {
+
+ function PlannerContent() {
   const searchParams = useSearchParams();
 
   const defaultCity = searchParams.get("city") || "";
@@ -16,15 +16,7 @@ export default function PlannerPage() {
   const [travelers, setTravelers] = useState(2);
   const [startDate, setStartDate] = useState("");
   const [travelStyle, setTravelStyle] = useState("Adventure");
-  const [question, setQuestion] = useState("");
-const [chatLoading, setChatLoading] = useState(false);
-const [messages, setMessages] = useState([
-  {
-    role: "assistant",
-    content:
-      "👋 Hi! I'm Mira AI. Ask me anything about your trip.",
-  },
-]);
+ 
 
   const [loading, setLoading] = useState(false);
   const [trip, setTrip] = useState(null);
@@ -86,47 +78,7 @@ if (!user) {
     )}`;
   };
 
-  const askMira = async () => {
-  if (!question.trim()) {
-    alert("Please ask Mira a question.");
-    return;
-  }
-
-  if (!trip) {
-    alert("Generate a trip first.");
-    return;
-  }
-
-  try {
-    setChatLoading(true);
-
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        trip,
-        question,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-      alert(data.error);
-      return;
-    }
-
-    setAnswer(data.answer);
-
-  } catch (error) {
-    console.error(error);
-    alert("Failed to contact Mira AI.");
-  } finally {
-    setChatLoading(false);
-  }
-};
+ 
 
   // ==========================
   // Generate AI Trip
@@ -699,4 +651,11 @@ setRestaurants(restaurantData.restaurants || []);
   );
 }
 
+export default function PlannerPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
+      <PlannerContent />
+    </Suspense>
+  );
+}
 
