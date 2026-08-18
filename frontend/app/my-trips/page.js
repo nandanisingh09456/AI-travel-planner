@@ -12,50 +12,61 @@ export default function MyTripsPage() {
   }, []);
 
   async function fetchTrips() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    setTrips([]);
-    return;
+    if (userError) {
+      console.error("USER ERROR:", userError);
+      alert(userError.message || "Could not get user");
+      return;
+    }
+
+    if (!user) {
+      setTrips([]);
+      return;
+    }
+
+   const { data, error } = await supabase
+  .from("trips")
+  .select("*")
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(
+        "FETCH TRIPS ERROR:",
+        JSON.stringify(error, null, 2)
+      );
+      alert(error.message || "Failed to fetch trips");
+      return;
+    }
+
+    setTrips(data || []);
   }
 
-  const { data, error } = await supabase
-    .from("trips")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  async function deleteTrip(id) {
+    const confirmDelete = confirm("Delete this trip?");
 
-  if (error) {
-    console.error(error);
-    return;
+    if (!confirmDelete) return;
+
+    const { data, error } = await supabase
+      .from("trips")
+      .delete()
+      .eq("id", id)
+      .select();
+
+    console.log("Deleted:", data);
+    console.log("Error:", error);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    fetchTrips();
   }
-
-  setTrips(data);
-}
-
-async function deleteTrip(id) {
-  const confirmDelete = confirm("Delete this trip?");
-
-  if (!confirmDelete) return;
-
-  const { data, error } = await supabase
-    .from("trips")
-    .delete()
-    .eq("id", id)
-    .select();
-
-  console.log("Deleted:", data);
-  console.log("Error:", error);
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  fetchTrips();
-}
 
   return (
     <main className="min-h-screen bg-slate-950 text-white p-10">
@@ -64,7 +75,9 @@ async function deleteTrip(id) {
       </h1>
 
       {trips.length === 0 ? (
-        <p className="text-gray-400">No trips saved yet.</p>
+        <p className="text-gray-400">
+          No trips saved yet.
+        </p>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trips.map((item) => (
@@ -80,7 +93,7 @@ async function deleteTrip(id) {
 
               <div className="p-5">
                 <h2 className="text-2xl font-bold">
-                  {item.trip.tripTitle}
+                  {item.trip?.tripTitle}
                 </h2>
 
                 <p className="text-cyan-400 mt-2">
@@ -88,11 +101,11 @@ async function deleteTrip(id) {
                 </p>
 
                 <p className="text-gray-400 mt-2 line-clamp-3">
-                  {item.trip.summary}
+                  {item.trip?.summary}
                 </p>
 
                 <p className="mt-3 font-semibold text-green-400">
-                  💰 {item.trip.estimatedBudget}
+                  💰 {item.trip?.estimatedBudget}
                 </p>
 
                 <div className="flex gap-3 mt-5">

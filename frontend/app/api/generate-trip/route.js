@@ -92,7 +92,7 @@ If live prices are unavailable, provide realistic estimates.`;
 
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       temperature: 0.7,
       response_format: {
         type: "json_object",
